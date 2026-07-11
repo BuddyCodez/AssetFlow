@@ -1,0 +1,31 @@
+// Better-T-Stack
+//
+// Website: https://www.better-t-stack.dev/
+// Stack Builder: https://www.better-t-stack.dev/new
+// Analytics: https://www.better-t-stack.dev/analytics
+// Showcase: https://www.better-t-stack.dev/showcase
+// Sponsor: https://github.com/sponsors/AmanVarshney01
+//
+// Add new addons with: bun create better-t-stack add
+// This file is safe to delete
+
+{
+  "$schema": "https://r2.better-t-stack.dev/schema.json",
+  "version": "3.36.3",
+  "createdAt": "2026-07-11T15:58:12.248Z",
+  "reproducibleCommand": "bun create better-t-stack@latest odoo-hackathon-2026 --frontend tanstack-router --backend elysia --runtime bun --database postgres --orm prisma --api orpc --auth better-auth --payments none --addons biome evlog mcp skills turborepo --examples none --db-setup neon --web-deploy cloudflare --server-deploy docker --git --package-manager bun --install",
+  "database": "postgres",
+  "orm": "prisma",
+  "backend": "elysia",
+  "runtime": "bun",
+  "frontend": ["tanstack-router"],
+  "addons": ["biome", "evlog", "mcp", "skills", "turborepo"],
+  "examples": [],
+  "auth": "better-auth",
+  "payments": "none",
+  "packageManager": "bun",
+  "dbSetup": "neon",
+  "api": "orpc",
+  "webDeploy": "cloudflare",
+  "serverDeploy": "docker",
+}

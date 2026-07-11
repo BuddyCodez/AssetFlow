@@ -1,0 +1,24 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "base-lyra",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/styles/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@odoo-hackathon-2026/ui/components",
+    "utils": "@odoo-hackathon-2026/ui/lib/utils",
+    "hooks": "@odoo-hackathon-2026/ui/hooks",
+    "lib": "@odoo-hackathon-2026/ui/lib",
+    "ui": "@odoo-hackathon-2026/ui/components"
+  },
+  "menuColor": "default",
+  "menuAccent": "subtle",
+  "registries": {}
+}

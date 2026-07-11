@@ -1,0 +1,3 @@
+{
+  "extends": "@odoo-hackathon-2026/config/tsconfig.base.json"
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@odoo-hackathon-2026/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@odoo-hackathon-2026/db": "workspace:*",
+    "@odoo-hackathon-2026/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@odoo-hackathon-2026/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}
