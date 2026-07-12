@@ -1,6 +1,23 @@
 name: odoo-hackathon-2026
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: odoo_hackathon
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
   server:
     build:
       context: .
@@ -11,6 +28,12 @@ services:
     env_file:
       - path: apps/server/.env
         required: false
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/odoo_hackathon
+      DATABASE_URL_DIRECT: postgresql://postgres:postgres@postgres:5432/odoo_hackathon
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test:
         [
@@ -24,3 +47,6 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
+
+volumes:
+  pgdata:

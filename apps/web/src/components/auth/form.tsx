@@ -21,7 +21,8 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { motion, AnimatePresence, MotionConfig } from "motion/react";
-import { Eye, EyeOff, ArrowRight, Loader2, Mail, Lock, User } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, Mail, Lock, User } from "lucide-react";
+import { Loader } from "@odoo-hackathon-2026/ui/components/motion/loader";
 
 import { authClient } from "@/lib/auth-client";
 import { CreateOrgModal } from "./create-org-modal";
@@ -255,7 +256,7 @@ function SubmitButton({
             transition={{ duration: 0.15 }}
             className="flex items-center gap-2"
           >
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader variant="ascii" size={16} />
             {loadingLabel}
           </motion.span>
         ) : (

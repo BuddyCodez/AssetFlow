@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createFileRoute('/_auth/audits')({
+export const Route = createFileRoute('/_auth/(admin)/activity')({
   component: RouteComponent,
 });
 
@@ -9,8 +9,8 @@ function RouteComponent() {
     <div className="p-6 space-y-4">
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <h1 className="text-xl font-semibold text-neutral-100">Asset Audits</h1>
-          <p className="text-sm text-neutral-500">Run structured verification cycles with auditor assignments.</p>
+          <h1 className="text-xl font-semibold text-neutral-100">Activity & Notifications</h1>
+          <p className="text-sm text-neutral-500">Full audit log of actions and real-time notifications for every role.</p>
         </div>
         <span className="inline-flex items-center rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 text-xs font-medium text-amber-400">
           Coming Soon

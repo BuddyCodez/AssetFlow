@@ -12,7 +12,7 @@ import {
   ClipboardPlus,
 } from "lucide-react";
 
-export const Route = createFileRoute("/_auth/dashboard")({
+export const Route = createFileRoute("/_auth/(admin)/dashboard")({
   component: RouteComponent,
 });
 

@@ -40,6 +40,8 @@ import {
 } from "@odoo-hackathon-2026/ui/components/dropdown-menu";
 
 import { authClient } from "@/lib/auth-client";
+import { useQuery } from "@tanstack/react-query";
+import { orpc } from "@/utils/orpc";
 
 // ─── Nav definition ──────────────────────────────────────────────────────────────
 interface NavItem {
@@ -50,30 +52,28 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { label: "Dashboard",      url: "/dashboard",    icon: <LayoutDashboard size={16} /> },
-  { label: "Org Setup",      url: "/org-setup",    icon: <Building2 size={16} />,       adminOnly: true },
-  { label: "Assets",         url: "/assets",       icon: <Package size={16} /> },
-  { label: "Allocations",    url: "/allocations",  icon: <ArrowLeftRight size={16} /> },
-  { label: "Bookings",       url: "/bookings",     icon: <CalendarCheck size={16} /> },
-  { label: "Maintenance",    url: "/maintenance",  icon: <Wrench size={16} /> },
-  { label: "Audits",         url: "/audits",       icon: <ClipboardList size={16} /> },
-  { label: "Reports",        url: "/reports",      icon: <BarChart3 size={16} /> },
-  { label: "Activity",       url: "/activity",     icon: <Bell size={16} /> },
-  { label: "Settings",       url: "/settings",     icon: <Settings size={16} /> },
+  { label: "Dashboard",             url: "/dashboard",    icon: <LayoutDashboard size={16} /> },
+  { label: "Organization setup",     url: "/org-setup",    icon: <Building2 size={16} /> },
+  { label: "Assets",                url: "/assets",       icon: <Package size={16} /> },
+  { label: "Allocation & Transfer",  url: "/allocations",  icon: <ArrowLeftRight size={16} /> },
+  { label: "Resource Booking",      url: "/bookings",     icon: <CalendarCheck size={16} /> },
+  { label: "Maintenance",           url: "/maintenance",  icon: <Wrench size={16} /> },
+  { label: "Audit",                 url: "/audits",       icon: <ClipboardList size={16} /> },
+  { label: "Reports",               url: "/reports",      icon: <BarChart3 size={16} /> },
+  { label: "Notifications",         url: "/activity",     icon: <Bell size={16} /> },
+  { label: "Settings",              url: "/settings",     icon: <Settings size={16} /> },
 ];
 
 const ROUTE_LABELS: Record<string, string> = {
   "/_auth/dashboard":   "Dashboard",
   "/_auth/org-setup":   "Organization Setup",
   "/_auth/assets":      "Assets",
-  "/_auth/allocations": "Allocations",
+  "/_auth/allocations": "Allocations & Transfer",
   "/_auth/bookings":    "Resource Bookings",
   "/_auth/maintenance": "Maintenance",
   "/_auth/audits":      "Audits",
-  "/_auth/reports":     "Reports & Analytics",
+  "/_auth/reports":     "Reports",
   "/_auth/activity":    "Activity & Notifications",
-  "/_auth/settings":    "Settings",
-  "/_auth/profile":     "Profile",
 };
 
 // ─── Route ────────────────────────────────────────────────────────────────────
@@ -95,6 +95,9 @@ export const Route = createFileRoute("/_auth")({
 });
 
 function AuthError({ error }: { error: any }) {
+  // Log the full error to console for debugging
+  console.error("[AuthError]", error?.message, error?.stack || error);
+
   return (
     <div className="flex h-full w-full flex-col items-center justify-center p-6 text-center bg-neutral-950 text-neutral-100">
       <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-6 max-w-md w-full">
@@ -122,6 +125,30 @@ function AuthLayout() {
 
   const { data: activeOrg } = authClient.useActiveOrganization();
   const { data: orgList } = authClient.useListOrganizations();
+
+  const { data: employee } = useQuery(orpc.employee.current.queryOptions());
+  const role = employee?.role;
+  const isAdmin = role === "ADMIN";
+  const isAssetManager = role === "ASSET_MANAGER";
+
+  const visibleNav = NAV.filter((item) => {
+    if (item.label === "Organization setup" && !isAdmin) return false;
+    return true;
+  }).map((item) => {
+    if (item.label === "Assets" && isAssetManager) {
+      return { ...item, url: "/asset_manager/assets" };
+    }
+    if (item.label === "Allocation & Transfer" && isAssetManager) {
+      return { ...item, url: "/asset_manager/allocations" };
+    }
+    if (item.label === "Maintenance" && isAssetManager) {
+      return { ...item, url: "/asset_manager/maintenance" };
+    }
+    if (item.label === "Audit" && isAssetManager) {
+      return { ...item, url: "/asset_manager/audits" };
+    }
+    return item;
+  });
 
   const [collapsed, setCollapsed] = useState(false);
   // Track which nav item the cursor is hovering (for the sliding bg)
@@ -240,7 +267,7 @@ function AuthLayout() {
             className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-0.5"
             onMouseLeave={() => setHoveredUrl(null)}
           >
-            {NAV.map((item) => {
+            {visibleNav.map((item) => {
               const active =
                 pathname === item.url || pathname.startsWith(`${item.url}/`);
               const hovered = hoveredUrl === item.url;

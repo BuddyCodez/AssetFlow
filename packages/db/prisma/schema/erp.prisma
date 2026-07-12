@@ -164,6 +164,14 @@ model Booking {
   @@map("booking")
 }
 
+enum MeetingType {
+  INDIVIDUAL
+  TEAM_MEETING
+  WORKSHOP
+  TRAINING
+  ONE_ON_ONE
+}
+
 model MaintenanceRequest {
   id              String              @id @default(cuid())
   assetId         String
@@ -171,12 +179,14 @@ model MaintenanceRequest {
   raisedById      String
   issueDescription String
   priority        MaintenancePriority @default(MEDIUM)
+  meetingType     MeetingType?        // Optional meeting type for asset context
   photoUrl        String?
   status          MaintenanceStatus   @default(PENDING)
   approvedBy      String?
+  approvedAt      DateTime?
   technicianName  String?
-  createdAt       DateTime            @default(now())
   resolvedAt      DateTime?
+  createdAt       DateTime            @default(now())
 
   @@index([assetId, status])
   @@map("maintenance_request")

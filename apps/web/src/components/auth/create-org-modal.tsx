@@ -14,9 +14,9 @@ import {
   Hash,
   ImageIcon,
   ArrowRight,
-  Loader2,
   X,
 } from "lucide-react";
+import { Loader } from "@odoo-hackathon-2026/ui/components/motion/loader";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 
@@ -196,7 +196,7 @@ export function CreateOrgModal({ onSuccess, inline = false }: CreateOrgModalProp
               transition={{ duration: 0.15 }}
               className="flex items-center gap-2"
             >
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader variant="ascii" size={16} />
               Creating…
             </motion.span>
           ) : (

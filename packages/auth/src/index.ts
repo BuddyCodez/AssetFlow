@@ -21,6 +21,21 @@ export function createAuth() {
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     databaseHooks: {
+      user: {
+        create: {
+          after: async (user: any) => {
+            const db = createPrismaClient();
+            await db.employee.create({
+              data: {
+                userId: user.id,
+                organizationId: "",
+                role: "EMPLOYEE",
+                isActive: true,
+              },
+            });
+          },
+        },
+      },
       member: {
         create: {
           after: async (member: any) => {

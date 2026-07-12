@@ -11,16 +11,23 @@ import {
   UserCheck,
   Shield,
   Trash2,
-  Loader2,
   CheckCircle,
   XCircle,
 } from "lucide-react";
+import { Loader } from "@odoo-hackathon-2026/ui/components/motion/loader";
 import { toast } from "sonner";
 
 import { orpc } from "@/utils/orpc";
 import { authClient } from "@/lib/auth-client";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@odoo-hackathon-2026/ui/components/motion/select";
 
-export const Route = createFileRoute("/_auth/org-setup")({
+export const Route = createFileRoute("/_auth/(admin)/org-setup")({
   component: RouteComponent,
 });
 
@@ -38,7 +45,7 @@ function RouteComponent() {
   const { data: activeOrg, refetch: refetchOrg } = authClient.useActiveOrganization();
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-0.5">
@@ -157,6 +164,7 @@ function DepartmentsTab({
   const [parentDeptId, setParentDeptId] = useState("");
   const [headEmpId, setHeadEmpId] = useState("");
   const [loading, setLoading] = useState(false);
+
   const createMutation = useMutation(orpc.department.create.mutationOptions());
   const updateMutation = useMutation(orpc.department.update.mutationOptions());
 
@@ -225,38 +233,46 @@ function DepartmentsTab({
             <label className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">
               Parent Department
             </label>
-            <select
+            <Select
               value={parentDeptId}
-              onChange={(e) => setParentDeptId(e.target.value)}
-              className="w-full h-10 px-3 rounded-xl bg-neutral-900 border border-neutral-800 text-sm text-neutral-300 outline-none focus:border-neutral-500"
+              onValueChange={setParentDeptId}
             >
-              <option value="">None (Top Level)</option>
-              {departments
-                .filter((d) => d.isActive)
-                .map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-            </select>
+              <SelectTrigger className="w-full h-10 px-3 rounded-xl bg-neutral-900 border border-neutral-800 text-sm text-neutral-350 outline-none hover:border-neutral-700 transition-colors">
+                <SelectValue placeholder="None (Top Level)" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60 overflow-y-auto">
+                <SelectItem value="">None (Top Level)</SelectItem>
+                {departments
+                  .filter((d) => d.isActive)
+                  .map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">
             <label className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">
               Department Head
             </label>
-            <select
+            <Select
               value={headEmpId}
-              onChange={(e) => setHeadEmpId(e.target.value)}
-              className="w-full h-10 px-3 rounded-xl bg-neutral-900 border border-neutral-800 text-sm text-neutral-300 outline-none focus:border-neutral-500"
+              onValueChange={setHeadEmpId}
             >
-              <option value="">Unassigned</option>
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.user.name} ({emp.user.email})
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full h-10 px-3 rounded-xl bg-neutral-900 border border-neutral-800 text-sm text-neutral-350 outline-none hover:border-neutral-700 transition-colors">
+                <SelectValue placeholder="Unassigned" />
+              </SelectTrigger>
+              <SelectContent className="max-h-60 overflow-y-auto">
+                <SelectItem value="">Unassigned</SelectItem>
+                {employees.map((emp) => (
+                  <SelectItem key={emp.id} value={emp.id}>
+                    {emp.user.name} ({emp.user.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <button
@@ -264,7 +280,7 @@ function DepartmentsTab({
             disabled={loading || !name.trim()}
             className="w-full h-10 rounded-xl bg-neutral-100 text-neutral-900 text-sm font-semibold hover:bg-neutral-200 transition-colors select-none cursor-pointer flex items-center justify-center"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add Department"}
+            {loading ? <Loader variant="ascii" size={16} /> : "Add Department"}
           </button>
         </form>
       </div>
@@ -332,6 +348,7 @@ function CategoriesTab({
 }) {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+
   const createMutation = useMutation(orpc.category.create.mutationOptions());
   const deleteMutation = useMutation(orpc.category.delete.mutationOptions());
 
@@ -391,7 +408,7 @@ function CategoriesTab({
             disabled={loading || !name.trim()}
             className="w-full h-10 rounded-xl bg-neutral-100 text-neutral-900 text-sm font-semibold hover:bg-neutral-200 transition-colors select-none cursor-pointer flex items-center justify-center"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add Category"}
+            {loading ? <Loader variant="ascii" size={16} /> : "Add Category"}
           </button>
         </form>
       </div>
@@ -528,6 +545,12 @@ function DirectoryTab({
     }
   };
 
+  const copyInviteLink = (id: string) => {
+    const link = `${window.location.origin}/accept-invite?id=${id}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Invitation link copied to clipboard!");
+  };
+
   return (
     <div className="space-y-6">
       {/* Invitation Section */}
@@ -557,7 +580,7 @@ function DirectoryTab({
               disabled={inviteLoading || !inviteEmail.trim()}
               className="w-full h-10 rounded-xl bg-neutral-100 text-neutral-900 text-sm font-semibold hover:bg-neutral-200 transition-colors select-none cursor-pointer flex items-center justify-center"
             >
-              {inviteLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Invitation"}
+              {inviteLoading ? <Loader variant="ascii" size={16} /> : "Send Invitation"}
             </button>
           </form>
         </div>
@@ -586,12 +609,20 @@ function DirectoryTab({
                         Expires: {new Date(inv.expiresAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <button
-                      onClick={() => handleCancelInvite(inv.id)}
-                      className="text-xs px-3 py-1.5 rounded-lg border border-neutral-800 hover:border-red-500/30 hover:bg-red-550/10 hover:text-red-400 text-neutral-500 transition-all duration-100 cursor-pointer"
-                    >
-                      Cancel
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => copyInviteLink(inv.id)}
+                        className="text-xs px-3 py-1.5 rounded-lg border border-neutral-800 hover:border-neutral-700 bg-neutral-900 hover:text-neutral-200 text-neutral-450 transition-all duration-100 cursor-pointer"
+                      >
+                        Copy Link
+                      </button>
+                      <button
+                        onClick={() => handleCancelInvite(inv.id)}
+                        className="text-xs px-3 py-1.5 rounded-lg border border-neutral-800 hover:border-red-500/30 hover:bg-red-550/10 hover:text-red-400 text-neutral-500 transition-all duration-100 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 ))}
             </div>
@@ -639,34 +670,42 @@ function DirectoryTab({
 
                       {/* Department dropdown */}
                       <td className="py-3.5">
-                        <select
+                        <Select
                           value={emp.departmentId || ""}
-                          onChange={(e) => handleSetDepartment(emp, e.target.value)}
-                          className="px-2 py-1 rounded bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 outline-none cursor-pointer hover:border-neutral-700 transition-colors"
+                          onValueChange={(val) => handleSetDepartment(emp, val)}
                         >
-                          <option value="">None</option>
-                          {departments
-                            .filter((d) => d.isActive)
-                            .map((d) => (
-                              <option key={d.id} value={d.id}>
-                                {d.name}
-                              </option>
-                            ))}
-                        </select>
+                          <SelectTrigger className="h-8 px-2 rounded bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 outline-none hover:border-neutral-700 transition-colors">
+                            <SelectValue placeholder="None" />
+                          </SelectTrigger>
+                          <SelectContent className="w-48 max-h-60 overflow-y-auto">
+                            <SelectItem value="">None</SelectItem>
+                            {departments
+                              .filter((d) => d.isActive)
+                              .map((d) => (
+                                <SelectItem key={d.id} value={d.id}>
+                                  {d.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
                       </td>
 
                       {/* Role selector */}
                       <td className="py-3.5">
-                        <select
+                        <Select
                           value={emp.role}
-                          onChange={(e) => handlePromoteRole(emp.id, e.target.value)}
-                          className="px-2 py-1 rounded bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 outline-none cursor-pointer hover:border-neutral-700 transition-colors font-medium"
+                          onValueChange={(val) => handlePromoteRole(emp.id, val)}
                         >
-                          <option value="EMPLOYEE">Employee</option>
-                          <option value="ADMIN">Admin</option>
-                          <option value="DEPARTMENT_HEAD">Department Head</option>
-                          <option value="ASSET_MANAGER">Asset Manager</option>
-                        </select>
+                          <SelectTrigger className="h-8 px-2 rounded bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 outline-none hover:border-neutral-700 transition-colors font-medium">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="w-48">
+                            <SelectItem value="EMPLOYEE">Employee</SelectItem>
+                            <SelectItem value="ADMIN">Admin</SelectItem>
+                            <SelectItem value="DEPARTMENT_HEAD">Department Head</SelectItem>
+                            <SelectItem value="ASSET_MANAGER">Asset Manager</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </td>
 
                       {/* Status toggle */}

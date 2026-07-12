@@ -24,12 +24,15 @@ export const requireRole = (...roles: EmployeeRole[]) =>
     if (!context.session?.user) {
       throw new ORPCError("UNAUTHORIZED");
     }
+
     const employee = await prisma.employee.findUnique({
       where: { userId: context.session.user.id },
     });
-    if (!employee || !roles.includes(employee.role as any) || !employee.isActive) {
+
+    if (!employee || !roles.includes(employee.role) || !employee.isActive) {
       throw new ORPCError("FORBIDDEN");
     }
+
     return next({
       context: {
         session: context.session,
