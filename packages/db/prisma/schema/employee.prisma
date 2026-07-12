@@ -1,0 +1,26 @@
+// Employee model — ERP-specific data, links to Better Auth User + Member
+// Role is stored here (ADMIN, EMPLOYEE, DEPARTMENT_HEAD, ASSET_MANAGER).
+// Better Auth member.role stays as "owner"/"member" for invite/auth purposes;
+// our business logic reads EmployeeRole from this table via requireRole().
+
+enum EmployeeRole {
+  ADMIN
+  EMPLOYEE
+  DEPARTMENT_HEAD
+  ASSET_MANAGER
+}
+
+model Employee {
+  id             String       @id @default(cuid())
+  userId         String       @unique
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  role           EmployeeRole @default(EMPLOYEE)
+  department     String?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@map("employee")
+}

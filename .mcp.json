@@ -23,6 +23,10 @@
     "better-auth": {
       "type": "http",
       "url": "https://mcp.inkeep.com/better-auth/mcp"
+    },
+    "beui": {
+      "type": "http",
+      "url": "https://mcp.beui.dev/mcp"
     }
   }
 }

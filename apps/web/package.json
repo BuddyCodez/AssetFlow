@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
+    "@hugeicons/core-free-icons": "^4.2.2",
+    "@hugeicons/react": "^1.1.9",
     "@odoo-hackathon-2026/api": "workspace:*",
     "@odoo-hackathon-2026/env": "workspace:*",
     "@odoo-hackathon-2026/ui": "workspace:*",
@@ -25,9 +27,11 @@
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "lucide-react": "catalog:",
+    "motion": "^12.42.2",
     "next-themes": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "react-icons": "^5.7.0",
     "sonner": "catalog:",
     "zod": "catalog:"
   },

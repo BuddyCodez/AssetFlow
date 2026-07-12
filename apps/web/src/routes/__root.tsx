@@ -4,12 +4,16 @@ import { createORPCClient } from "@orpc/client";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { HeadContent, Outlet, createRootRouteWithContext } from "@tanstack/react-router";
+import {
+  HeadContent,
+  Outlet,
+  createRootRouteWithContext,
+  useMatch,
+} from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useState } from "react";
 
-import Header from "@/components/header";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/utils/theme-provider";
 import { link, orpc } from "@/utils/orpc";
 
 import "../index.css";
@@ -23,26 +27,18 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   component: RootComponent,
   head: () => ({
     meta: [
-      {
-        title: "odoo-hackathon-2026",
-      },
-      {
-        name: "description",
-        content: "odoo-hackathon-2026 is a web application",
-      },
+      { title: "Slap" },
+      { name: "description", content: "Slap — Collaborate. Build. Ship." },
     ],
-    links: [
-      {
-        rel: "icon",
-        href: "/favicon.ico",
-      },
-    ],
+    links: [{ rel: "icon", href: "/favicon.ico" }],
   }),
 });
 
 function RootComponent() {
   const [client] = useState<AppRouterClient>(() => createORPCClient(link));
   const [orpcUtils] = useState(() => createTanstackQueryUtils(client));
+
+  const isLoginPage = useMatch({ from: "/login", shouldThrow: false });
 
   return (
     <>
@@ -53,8 +49,13 @@ function RootComponent() {
         disableTransitionOnChange
         storageKey="vite-ui-theme"
       >
-        <div className="grid grid-rows-[auto_1fr] h-svh">
-          <Header />
+        {/*
+          Both layouts need h-svh. The auth layout manages its own internal
+          structure (header + sidebar + content). The login page is full-bleed.
+          In both cases we just provide the viewport height and let children
+          handle everything else — no grid rows here.
+        */}
+        <div className="h-svh overflow-hidden">
           <Outlet />
         </div>
         <Toaster richColors />
