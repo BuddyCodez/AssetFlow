@@ -2,6 +2,7 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import prisma from "@odoo-hackathon-2026/db";
 import { employeeProcedure, assetManagerProcedure } from "../index";
+import { logActivity } from "../lib/activity";
 
 export const transferRouter = {
   request: employeeProcedure
@@ -23,7 +24,7 @@ export const transferRouter = {
         throw new ORPCError("NOT_FOUND");
       }
 
-      return await prisma.transferRequest.create({
+      const transfer = await prisma.transferRequest.create({
         data: {
           assetId: input.assetId,
           fromEmployeeId: asset.currentHolderId || null,
@@ -32,6 +33,19 @@ export const transferRouter = {
           status: "REQUESTED",
         },
       });
+
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "TRANSFER_REQUESTED",
+        entityType: "transfer",
+        entityId: transfer.id,
+        metadata: { assetId: input.assetId, toEmployeeId: input.toEmployeeId },
+        notifyEmployeeId: input.toEmployeeId,
+        notificationMessage: `Transfer of ${asset.name} has been requested to you`,
+      });
+
+      return transfer;
     }),
 
   list: employeeProcedure.handler(async ({ context }) => {
@@ -145,6 +159,17 @@ export const transferRouter = {
         },
       });
 
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "TRANSFER_APPROVED",
+        entityType: "transfer",
+        entityId: input.requestId,
+        metadata: { assetId: request.assetId, toEmployeeId: request.toEmployeeId },
+        notifyEmployeeId: request.requestedBy,
+        notificationMessage: `Transfer of ${asset.name} has been approved`,
+      });
+
       return { success: true };
     }),
 
@@ -180,6 +205,17 @@ export const transferRouter = {
           resolvedAt: new Date(),
           approvedBy: context.employee.id,
         },
+      });
+
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "TRANSFER_REJECTED",
+        entityType: "transfer",
+        entityId: input.requestId,
+        metadata: { assetId: request.assetId },
+        notifyEmployeeId: request.requestedBy,
+        notificationMessage: `Transfer of ${asset.name} has been rejected`,
       });
 
       return { success: true };

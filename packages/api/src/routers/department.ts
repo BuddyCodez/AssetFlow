@@ -1,6 +1,7 @@
 import { z } from "zod";
 import prisma from "@odoo-hackathon-2026/db";
 import { employeeProcedure, adminProcedure } from "../index";
+import { logActivity } from "../lib/activity";
 
 export const departmentRouter = {
   list: employeeProcedure.handler(async ({ context }) => {
@@ -24,7 +25,7 @@ export const departmentRouter = {
     )
     .handler(async ({ input, context }) => {
       const orgId = context.employee.organizationId;
-      return await prisma.department.create({
+      const dept = await prisma.department.create({
         data: {
           organizationId: orgId,
           name: input.name,
@@ -33,6 +34,17 @@ export const departmentRouter = {
           isActive: true,
         },
       });
+
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "DEPARTMENT_CREATED",
+        entityType: "department",
+        entityId: dept.id,
+        metadata: { name: input.name },
+      });
+
+      return dept;
     }),
 
   update: adminProcedure
@@ -46,7 +58,7 @@ export const departmentRouter = {
       }),
     )
     .handler(async ({ input }) => {
-      return await prisma.department.update({
+      const updated = await prisma.department.update({
         where: { id: input.id },
         data: {
           name: input.name,
@@ -55,5 +67,7 @@ export const departmentRouter = {
           isActive: input.isActive !== undefined ? input.isActive : undefined,
         },
       });
+
+      return updated;
     }),
 };

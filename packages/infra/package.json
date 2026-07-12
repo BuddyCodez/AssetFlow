@@ -8,6 +8,8 @@
     "destroy": "alchemy destroy"
   },
   "dependencies": {
+    "@odoo-hackathon-2026/db": "workspace:*",
+    "@prisma/adapter-pg": "^7.8.0",
     "dotenv": "catalog:",
     "zod": "catalog:"
   },

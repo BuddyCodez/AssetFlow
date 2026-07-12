@@ -2,6 +2,7 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import prisma from "@odoo-hackathon-2026/db";
 import { assetManagerProcedure } from "../index";
+import { logActivity } from "../lib/activity";
 
 export const allocationRouter = {
   allocate: assetManagerProcedure
@@ -55,6 +56,17 @@ export const allocationRouter = {
         },
       });
 
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "ALLOCATION_CREATED",
+        entityType: "allocation",
+        entityId: allocation.id,
+        metadata: { assetId: input.assetId, employeeId: input.employeeId },
+        notifyEmployeeId: input.employeeId || undefined,
+        notificationMessage: input.employeeId ? `Asset ${asset.name} has been allocated to you` : `Asset ${asset.name} has been allocated`,
+      });
+
       return allocation;
     }),
 
@@ -104,6 +116,15 @@ export const allocationRouter = {
           status: "AVAILABLE",
           currentHolderId: null,
         },
+      });
+
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "ALLOCATION_RETURNED",
+        entityType: "allocation",
+        entityId: input.assetId,
+        metadata: { assetName: asset.name },
       });
 
       return { success: true };

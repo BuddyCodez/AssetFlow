@@ -1,4 +1,5 @@
-import type { RouterClient } from "@orpc/server";import { healthRouter } from "./health";
+import type { RouterClient } from "@orpc/server";
+import { healthRouter } from "./health";
 import { departmentRouter } from "./department";
 import { categoryRouter } from "./category";
 import { employeeRouter } from "./employee";
@@ -8,6 +9,7 @@ import { transferRouter } from "./transfer";
 import { bookingRouter } from "./booking";
 import { maintenanceRouter } from "./maintenance";
 import { auditRouter } from "./audit";
+import { notificationRouter } from "./notification";
 
 export const appRouter = {
   healthCheck: healthRouter.healthCheck,
@@ -21,6 +23,7 @@ export const appRouter = {
   booking: bookingRouter,
   maintenance: maintenanceRouter,
   audit: auditRouter,
+  notification: notificationRouter,
 } as const;
 
 export type AppRouter = typeof appRouter;

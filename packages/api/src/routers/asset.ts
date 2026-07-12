@@ -2,6 +2,7 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import prisma from "@odoo-hackathon-2026/db";
 import { employeeProcedure, assetManagerProcedure } from "../index";
+import { logActivity } from "../lib/activity";
 
 const AssetStatusEnum = z.enum([
   "AVAILABLE",
@@ -77,7 +78,7 @@ export const assetRouter = {
       const tagNumber = String(count + 1).padStart(4, "0");
       const assetTag = `AF-${tagNumber}`;
 
-      return await prisma.asset.create({
+      const asset = await prisma.asset.create({
         data: {
           organizationId: orgId,
           assetTag,
@@ -94,6 +95,17 @@ export const assetRouter = {
           department: true,
         },
       });
+
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "ASSET_REGISTERED",
+        entityType: "asset",
+        entityId: asset.id,
+        metadata: { name: asset.name, assetTag: asset.assetTag },
+      });
+
+      return asset;
     }),
 
   update: assetManagerProcedure

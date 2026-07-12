@@ -44,24 +44,29 @@ import { useQuery } from "@tanstack/react-query";
 import { orpc } from "@/utils/orpc";
 
 // ─── Nav definition ──────────────────────────────────────────────────────────────
+type NavRole = "ADMIN" | "ASSET_MANAGER" | "DEPARTMENT_HEAD" | "EMPLOYEE";
+
 interface NavItem {
   label: string;
   url: string;
   icon: React.ReactNode;
-  adminOnly?: boolean;
+  /** If empty, visible to all roles. Otherwise, only these roles see it. */
+  roles: NavRole[];
 }
 
 const NAV: NavItem[] = [
-  { label: "Dashboard",             url: "/dashboard",    icon: <LayoutDashboard size={16} /> },
-  { label: "Organization setup",     url: "/org-setup",    icon: <Building2 size={16} /> },
-  { label: "Assets",                url: "/assets",       icon: <Package size={16} /> },
-  { label: "Allocation & Transfer",  url: "/allocations",  icon: <ArrowLeftRight size={16} /> },
-  { label: "Resource Booking",      url: "/bookings",     icon: <CalendarCheck size={16} /> },
-  { label: "Maintenance",           url: "/maintenance",  icon: <Wrench size={16} /> },
-  { label: "Audit",                 url: "/audits",       icon: <ClipboardList size={16} /> },
-  { label: "Reports",               url: "/reports",      icon: <BarChart3 size={16} /> },
-  { label: "Notifications",         url: "/activity",     icon: <Bell size={16} /> },
-  { label: "Settings",              url: "/settings",     icon: <Settings size={16} /> },
+  { label: "Dashboard",             url: "/dashboard",     icon: <LayoutDashboard size={16} />, roles: [] },
+  { label: "Organization setup",     url: "/org-setup",     icon: <Building2 size={16} />, roles: ["ADMIN"] },
+  { label: "Assets",                url: "/assets",        icon: <Package size={16} />, roles: ["ADMIN", "ASSET_MANAGER", "DEPARTMENT_HEAD"] },
+  { label: "Allocation & Transfer",  url: "/allocations",   icon: <ArrowLeftRight size={16} />, roles: ["ADMIN", "ASSET_MANAGER", "DEPARTMENT_HEAD"] },
+  { label: "My Assets",             url: "/my-assets",     icon: <Package size={16} />, roles: ["EMPLOYEE"] },
+  { label: "Resource Booking",      url: "/bookings",      icon: <CalendarCheck size={16} />, roles: [] },
+  { label: "Maintenance",           url: "/maintenance",   icon: <Wrench size={16} />, roles: ["ADMIN", "ASSET_MANAGER", "DEPARTMENT_HEAD"] },
+  { label: "My Maintenance",        url: "/my-maintenance",icon: <Wrench size={16} />, roles: ["EMPLOYEE"] },
+  { label: "Audit",                 url: "/audits",        icon: <ClipboardList size={16} />, roles: ["ADMIN", "ASSET_MANAGER"] },
+  { label: "Reports",               url: "/reports",       icon: <BarChart3 size={16} />, roles: ["ADMIN", "ASSET_MANAGER", "DEPARTMENT_HEAD"] },
+  { label: "Notifications",         url: "/activity",      icon: <Bell size={16} />, roles: [] },
+  { label: "Settings",              url: "/settings",      icon: <Settings size={16} />, roles: [] },
 ];
 
 const ROUTE_LABELS: Record<string, string> = {
@@ -127,28 +132,24 @@ function AuthLayout() {
   const { data: orgList } = authClient.useListOrganizations();
 
   const { data: employee } = useQuery(orpc.employee.current.queryOptions());
-  const role = employee?.role;
-  const isAdmin = role === "ADMIN";
-  const isAssetManager = role === "ASSET_MANAGER";
+  const role = (employee?.role || "EMPLOYEE") as NavRole;
 
-  const visibleNav = NAV.filter((item) => {
-    if (item.label === "Organization setup" && !isAdmin) return false;
-    return true;
-  }).map((item) => {
-    if (item.label === "Assets" && isAssetManager) {
-      return { ...item, url: "/asset_manager/assets" };
-    }
-    if (item.label === "Allocation & Transfer" && isAssetManager) {
-      return { ...item, url: "/asset_manager/allocations" };
-    }
-    if (item.label === "Maintenance" && isAssetManager) {
-      return { ...item, url: "/asset_manager/maintenance" };
-    }
-    if (item.label === "Audit" && isAssetManager) {
-      return { ...item, url: "/asset_manager/audits" };
-    }
-    return item;
-  });
+  const visibleNav = NAV
+    .filter((item) => {
+      // Empty roles array = visible to everyone
+      if (item.roles.length === 0) return true;
+      return item.roles.includes(role);
+    })
+    .map((item) => {
+      // Asset Manager gets dedicated pages
+      if (role === "ASSET_MANAGER") {
+        if (item.url === "/assets")       return { ...item, url: "/asset_manager/assets" };
+        if (item.url === "/allocations")  return { ...item, url: "/asset_manager/allocations" };
+        if (item.url === "/maintenance")  return { ...item, url: "/asset_manager/maintenance" };
+        if (item.url === "/audits")       return { ...item, url: "/asset_manager/audits" };
+      }
+      return item;
+    });
 
   const [collapsed, setCollapsed] = useState(false);
   // Track which nav item the cursor is hovering (for the sliding bg)

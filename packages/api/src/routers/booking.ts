@@ -2,6 +2,7 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import prisma from "@odoo-hackathon-2026/db";
 import { employeeProcedure } from "../index";
+import { logActivity } from "../lib/activity";
 
 export const bookingRouter = {
   list: employeeProcedure
@@ -125,6 +126,15 @@ export const bookingRouter = {
         },
       });
 
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "BOOKING_CREATED",
+        entityType: "booking",
+        entityId: booking.id,
+        metadata: { assetId: input.assetId, startTime: input.startTime, endTime: input.endTime },
+      });
+
       return booking;
     }),
 
@@ -160,11 +170,22 @@ export const bookingRouter = {
         });
       }
 
-      return await prisma.booking.update({
+      const cancelled = await prisma.booking.update({
         where: { id: input.bookingId },
         data: {
           status: "CANCELLED",
         },
       });
+
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "BOOKING_CANCELLED",
+        entityType: "booking",
+        entityId: input.bookingId,
+        metadata: { assetId: booking.assetId },
+      });
+
+      return cancelled;
     }),
 };

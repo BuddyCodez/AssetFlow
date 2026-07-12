@@ -2,6 +2,7 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import prisma from "@odoo-hackathon-2026/db";
 import { employeeProcedure, assetManagerProcedure } from "../index";
+import { logActivity } from "../lib/activity";
 
 export const auditRouter = {
   list: employeeProcedure
@@ -100,6 +101,15 @@ export const auditRouter = {
         },
       });
 
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "AUDIT_CYCLE_CREATED",
+        entityType: "audit",
+        entityId: cycle.id,
+        metadata: { scope: input.scopeDepartmentId || input.scopeLocation || "all", assetCount: assets.length },
+      });
+
       return cycle;
     }),
 
@@ -147,7 +157,7 @@ export const auditRouter = {
         throw new ORPCError("BAD_REQUEST", { message: "Audit cycle is not open." });
       }
 
-      return await prisma.auditItem.update({
+      const updatedItem = await prisma.auditItem.update({
         where: { id: input.itemId },
         data: {
           result: input.result,
@@ -156,6 +166,17 @@ export const auditRouter = {
           checkedAt: new Date(),
         },
       });
+
+      await logActivity({
+        organizationId: item.auditCycle.organizationId,
+        employeeId: context.employee.id,
+        action: "AUDIT_ITEM_MARKED",
+        entityType: "audit",
+        entityId: input.itemId,
+        metadata: { result: input.result, cycleId: item.auditCycleId },
+      });
+
+      return updatedItem;
     }),
 
   close: assetManagerProcedure
@@ -192,6 +213,15 @@ export const auditRouter = {
       await prisma.auditCycle.update({
         where: { id: input.cycleId },
         data: { status: "CLOSED" },
+      });
+
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "AUDIT_CYCLE_CLOSED",
+        entityType: "audit",
+        entityId: input.cycleId,
+        metadata: { missingItemsCount: missingItemIds.length },
       });
 
       return { success: true, missingItemsCount: missingItemIds.length };

@@ -2,6 +2,7 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import prisma from "@odoo-hackathon-2026/db";
 import { employeeProcedure, assetManagerProcedure } from "../index";
+import { logActivity } from "../lib/activity";
 
 export const maintenanceRouter = {
   list: employeeProcedure
@@ -119,6 +120,15 @@ export const maintenanceRouter = {
         },
       });
 
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "MAINTENANCE_REQUESTED",
+        entityType: "maintenance",
+        entityId: request.id,
+        metadata: { assetId: input.assetId, priority: input.priority },
+      });
+
       return request;
     }),
 
@@ -167,6 +177,17 @@ export const maintenanceRouter = {
         }),
       ]);
 
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "MAINTENANCE_APPROVED",
+        entityType: "maintenance",
+        entityId: input.requestId,
+        metadata: { assetId: request.assetId },
+        notifyEmployeeId: request.raisedById,
+        notificationMessage: `Maintenance request #${input.requestId.slice(0, 8)} has been approved`,
+      });
+
       return { success: true };
     }),
 
@@ -198,6 +219,17 @@ export const maintenanceRouter = {
           status: "REJECTED",
           resolvedAt: new Date(),
         },
+      });
+
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "MAINTENANCE_REJECTED",
+        entityType: "maintenance",
+        entityId: input.requestId,
+        metadata: { assetId: request.assetId },
+        notifyEmployeeId: request.raisedById,
+        notificationMessage: `Maintenance request #${input.requestId.slice(0, 8)} has been rejected`,
       });
 
       return { success: true };
@@ -279,6 +311,17 @@ export const maintenanceRouter = {
         },
       });
 
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "MAINTENANCE_RESOLVED",
+        entityType: "maintenance",
+        entityId: input.requestId,
+        metadata: { assetId: request.assetId },
+        notifyEmployeeId: request.raisedById,
+        notificationMessage: `Maintenance request #${input.requestId.slice(0, 8)} has been resolved`,
+      });
+
       return { success: true };
     }),
 
@@ -325,6 +368,17 @@ export const maintenanceRouter = {
           },
         }),
       ]);
+
+      await logActivity({
+        organizationId: orgId,
+        employeeId: context.employee.id,
+        action: "MAINTENANCE_RESOLVED",
+        entityType: "maintenance",
+        entityId: input.requestId,
+        metadata: { assetId: request.assetId },
+        notifyEmployeeId: request.raisedById,
+        notificationMessage: `Maintenance request #${input.requestId.slice(0, 8)} has been resolved`,
+      });
 
       return { success: true };
     }),
