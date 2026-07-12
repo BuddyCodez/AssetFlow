@@ -1,0 +1,251 @@
+enum AssetStatus {
+  AVAILABLE
+  ALLOCATED
+  RESERVED
+  UNDER_MAINTENANCE
+  LOST
+  RETIRED
+  DISPOSED
+}
+
+enum AllocationStatus {
+  ACTIVE
+  RETURNED
+  OVERDUE
+}
+
+enum TransferStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum BookingStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum MaintenanceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  TECHNICIAN_ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum MaintenancePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AuditCycleStatus {
+  OPEN
+  CLOSED
+}
+
+enum AuditItemResult {
+  PENDING
+  VERIFIED
+  MISSING
+  DAMAGED
+}
+
+model Department {
+  id                 String       @id @default(cuid())
+  organizationId     String
+  name               String
+  parentDepartmentId String?
+  parentDepartment   Department?  @relation("DeptHierarchy", fields: [parentDepartmentId], references: [id])
+  children           Department[] @relation("DeptHierarchy")
+  headEmployeeId     String?
+  isActive           Boolean      @default(true)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  employees          Employee[]
+  assets             Asset[]
+
+  @@index([organizationId])
+  @@map("department")
+}
+
+model AssetCategory {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  customFields   Json?    // e.g. { "warrantyMonths": 24 }
+  createdAt      DateTime @default(now())
+  assets         Asset[]
+
+  @@index([organizationId])
+  @@map("asset_category")
+}
+
+model Asset {
+  id                String       @id @default(cuid())
+  organizationId    String
+  assetTag          String       // auto-generated AF-0001
+  name              String
+  categoryId        String
+  category          AssetCategory @relation(fields: [categoryId], references: [id])
+  serialNumber      String?
+  acquisitionDate   DateTime?
+  acquisitionCost   Decimal?     // reporting only, no accounting linkage
+  condition         String?
+  location          String?
+  photoUrl          String?
+  isBookable        Boolean      @default(false)
+  status            AssetStatus  @default(AVAILABLE)
+  departmentId      String?
+  department        Department?  @relation(fields: [departmentId], references: [id])
+  currentHolderId   String?      // Employee.id, null if unallocated/bookable pool
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  allocations       Allocation[]
+  bookings          Booking[]
+  maintenanceReqs   MaintenanceRequest[]
+  auditItems        AuditItem[]
+
+  @@unique([organizationId, assetTag])
+  @@index([organizationId, status])
+  @@map("asset")
+}
+
+model Allocation {
+  id                 String            @id @default(cuid())
+  assetId            String
+  asset              Asset             @relation(fields: [assetId], references: [id])
+  employeeId         String?
+  departmentId       String?
+  allocatedAt        DateTime          @default(now())
+  expectedReturnDate DateTime?
+  returnedAt         DateTime?
+  checkinNotes       String?
+  status             AllocationStatus  @default(ACTIVE)
+  allocatedBy        String            // Employee.id
+
+  @@index([assetId, status])
+  @@index([employeeId])
+  @@map("allocation")
+}
+
+model TransferRequest {
+  id             String         @id @default(cuid())
+  assetId        String
+  fromEmployeeId String?
+  toEmployeeId   String
+  requestedBy    String
+  status         TransferStatus @default(REQUESTED)
+  approvedBy     String?
+  createdAt      DateTime       @default(now())
+  resolvedAt     DateTime?
+
+  @@index([assetId, status])
+  @@map("transfer_request")
+}
+
+model Booking {
+  id           String        @id @default(cuid())
+  assetId      String
+  asset        Asset         @relation(fields: [assetId], references: [id])
+  bookedById   String        // Employee.id
+  departmentId String?
+  startTime    DateTime
+  endTime      DateTime
+  status       BookingStatus @default(UPCOMING)
+  createdAt    DateTime      @default(now())
+
+  @@index([assetId, startTime, endTime])
+  @@map("booking")
+}
+
+model MaintenanceRequest {
+  id              String              @id @default(cuid())
+  assetId         String
+  asset           Asset               @relation(fields: [assetId], references: [id])
+  raisedById      String
+  issueDescription String
+  priority        MaintenancePriority @default(MEDIUM)
+  photoUrl        String?
+  status          MaintenanceStatus   @default(PENDING)
+  approvedBy      String?
+  technicianName  String?
+  createdAt       DateTime            @default(now())
+  resolvedAt      DateTime?
+
+  @@index([assetId, status])
+  @@map("maintenance_request")
+}
+
+model AuditCycle {
+  id                 String            @id @default(cuid())
+  organizationId     String
+  scopeDepartmentId  String?
+  scopeLocation      String?
+  startDate          DateTime
+  endDate            DateTime
+  status             AuditCycleStatus  @default(OPEN)
+  createdBy          String
+  auditors           AuditCycleAuditor[]
+  items              AuditItem[]
+
+  @@index([organizationId, status])
+  @@map("audit_cycle")
+}
+
+model AuditCycleAuditor {
+  auditCycleId String
+  auditCycle   AuditCycle @relation(fields: [auditCycleId], references: [id])
+  employeeId   String
+
+  @@id([auditCycleId, employeeId])
+  @@map("audit_cycle_auditor")
+}
+
+model AuditItem {
+  id           String          @id @default(cuid())
+  auditCycleId String
+  auditCycle   AuditCycle      @relation(fields: [auditCycleId], references: [id])
+  assetId      String
+  asset        Asset           @relation(fields: [assetId], references: [id])
+  result       AuditItemResult @default(PENDING)
+  notes        String?
+  checkedBy    String?
+  checkedAt    DateTime?
+
+  @@unique([auditCycleId, assetId])
+  @@map("audit_item")
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  employeeId String
+  type       String   // e.g. "ASSET_ASSIGNED", "MAINTENANCE_APPROVED", "BOOKING_REMINDER"
+  message    String
+  entityType String?
+  entityId   String?
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([employeeId, isRead])
+  @@map("notification")
+}
+
+model ActivityLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  employeeId     String
+  action         String   // e.g. "ASSET_REGISTERED", "TRANSFER_APPROVED"
+  entityType     String
+  entityId       String
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@map("activity_log")
+}

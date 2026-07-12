@@ -16,7 +16,8 @@ model Employee {
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organizationId String
   role           EmployeeRole @default(EMPLOYEE)
-  department     String?
+  departmentId   String?
+  department     Department?  @relation(fields: [departmentId], references: [id])
   isActive       Boolean      @default(true)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt

@@ -21,6 +21,8 @@ import {
   BarChart3,
   Bell,
   Building2,
+  ChevronsUpDown,
+  Plus,
 } from "lucide-react";
 import { SidebarLeftIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -118,6 +120,9 @@ function AuthLayout() {
   const { session } = Route.useRouteContext();
   const matches = useMatches();
 
+  const { data: activeOrg } = authClient.useActiveOrganization();
+  const { data: orgList } = authClient.useListOrganizations();
+
   const [collapsed, setCollapsed] = useState(false);
   // Track which nav item the cursor is hovering (for the sliding bg)
   const [hoveredUrl, setHoveredUrl] = useState<string | null>(null);
@@ -149,25 +154,85 @@ function AuthLayout() {
           transition={{ type: "spring", stiffness: 260, damping: 28 }}
           className="shrink-0 flex flex-col overflow-hidden border-r border-neutral-800/70 bg-neutral-900"
         >
-          {/* Brand — same height as header for alignment */}
-          <div className="flex h-12 shrink-0 items-center border-b border-neutral-800/70 px-3.5 gap-3">
-            <div className="h-6 w-6 shrink-0 flex items-center justify-center rounded-md bg-neutral-100">
-              <span className="text-xs font-bold text-neutral-900 leading-none select-none">A</span>
-            </div>
-            <AnimatePresence initial={false}>
-              {!collapsed && (
-                <motion.span
-                  key="brand"
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.18 }}
-                  className="overflow-hidden whitespace-nowrap font-semibold text-sm text-neutral-100"
+          {/* Brand/Org Switcher — same height as header for alignment */}
+          <div className="flex h-12 shrink-0 items-center border-b border-neutral-800/70 px-2 gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="w-full flex items-center justify-between gap-2.5 h-9 rounded-lg px-2 text-left hover:bg-neutral-800/60 transition-colors duration-100 outline-none cursor-pointer select-none">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="h-6.5 w-6.5 shrink-0 flex items-center justify-center rounded-md bg-neutral-100 shadow-sm">
+                    <span className="text-xs font-bold text-neutral-900 leading-none select-none">
+                      {activeOrg?.logo ? (
+                        <img src={activeOrg.logo} alt="" className="h-full w-full object-cover rounded-md" />
+                      ) : (
+                        (activeOrg?.name || "A")[0].toUpperCase()
+                      )}
+                    </span>
+                  </div>
+                  <AnimatePresence initial={false}>
+                    {!collapsed && (
+                      <motion.div
+                        key="org-info"
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: "auto" }}
+                        exit={{ opacity: 0, width: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex flex-col overflow-hidden whitespace-nowrap min-w-0 text-left"
+                      >
+                        <span className="font-semibold text-xs text-neutral-150 truncate leading-tight">
+                          {activeOrg?.name || "AssetFlow ERP"}
+                        </span>
+                        <span className="text-[10px] text-neutral-500 font-mono truncate leading-none mt-0.5">
+                          {activeOrg?.slug || "erp"}
+                        </span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                {!collapsed && (
+                  <ChevronsUpDown className="h-3 w-3 text-neutral-500 shrink-0" />
+                )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" side="bottom" sideOffset={4} className="w-56 bg-neutral-900 border-neutral-800 text-neutral-200">
+                <DropdownMenuLabel className="text-neutral-500 text-[10px] uppercase tracking-wider font-mono">
+                  Organizations
+                </DropdownMenuLabel>
+                <DropdownMenuGroup className="p-0.5 space-y-0.5">
+                  {orgList?.map((org) => (
+                    <DropdownMenuItem
+                      key={org.id}
+                      onClick={async () => {
+                        try {
+                          await authClient.organization.setActive({ organizationId: org.id });
+                          toast.success(`Switched to ${org.name}`);
+                          window.location.reload();
+                        } catch (err: any) {
+                          toast.error(err?.message || "Failed to switch organization");
+                        }
+                      }}
+                      className={`gap-2 cursor-pointer rounded-md ${
+                        org.id === activeOrg?.id
+                          ? "bg-neutral-800 text-neutral-150 font-medium"
+                          : "text-neutral-400 hover:text-neutral-200"
+                      }`}
+                    >
+                      <Building2 className="h-3.5 w-3.5" />
+                      <div className="flex flex-col text-left">
+                        <span className="text-xs">{org.name}</span>
+                        <span className="text-[9px] text-neutral-500 font-mono leading-none">{org.slug}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator className="border-neutral-800" />
+                <DropdownMenuItem
+                  onClick={() => navigate({ to: "/onboarding" })}
+                  className="gap-2 cursor-pointer text-neutral-400 hover:text-neutral-200 p-2"
                 >
-                  AssetFlow ERP
-                </motion.span>
-              )}
-            </AnimatePresence>
+                  <Plus className="h-3.5 w-3.5 text-neutral-500" />
+                  <span className="text-xs">Create new organization</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Nav */}

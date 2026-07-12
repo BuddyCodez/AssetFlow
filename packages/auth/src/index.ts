@@ -20,6 +20,37 @@ export function createAuth() {
     },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
+    databaseHooks: {
+      member: {
+        create: {
+          after: async (member: any) => {
+            const db = createPrismaClient();
+            const existing = await db.employee.findUnique({
+              where: { userId: member.userId },
+            });
+            const role = member.role === "owner" ? "ADMIN" : "EMPLOYEE";
+            if (!existing) {
+              await db.employee.create({
+                data: {
+                  userId: member.userId,
+                  organizationId: member.organizationId,
+                  role: role,
+                  isActive: true,
+                },
+              });
+            } else {
+              await db.employee.update({
+                where: { userId: member.userId },
+                data: {
+                  organizationId: member.organizationId,
+                  role: member.role === "owner" ? "ADMIN" : existing.role,
+                },
+              });
+            }
+          },
+        },
+      },
+    } as any,
     advanced: {
       defaultCookieAttributes: {
         sameSite: "none",
